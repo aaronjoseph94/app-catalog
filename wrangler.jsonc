@@ -1,13 +1,10 @@
 {
-  // Local dev only. Deploys go through Freebuff Sites (manifest.json); it injects auth vars and DB.
-  "name": "vibe-catalog",
+  "name": "app-catalog",
   "main": "src/worker.js",
   "compatibility_date": "2026-11-01",
-  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
-  "vars": {
-    "FREEBUFF_CLIENT_ID": "6d6558ea-07f3-45ba-a302-e1aee6d9e888",
-    "FREEBUFF_ISSUER": "https://freebuff.com/oidc",
-    "APP_ORIGIN": "http://localhost:8787"
-  },
-  "d1_databases": [{ "binding": "DB", "database_name": "vibe-catalog", "database_id": "local" }]
+  "workers_dev": true,
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "routes": [{ "pattern": "apps.aaronjoseph.ca", "custom_domain": true }],
+  // ADMIN_PASSWORD is a secret: `wrangler secret put ADMIN_PASSWORD` (local: .dev.vars)
+  "d1_databases": [{ "binding": "DB", "database_name": "app-catalog", "database_id": "a8184889-54bd-4401-9430-ddee085ca006" }]
 }

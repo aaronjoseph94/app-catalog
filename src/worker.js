@@ -1,91 +1,86 @@
-import { createFreebuffAuth, isSameOriginRequest } from '@freebuff/auth'
-
-const STATUSES = ['idea', 'building', 'live', 'archived']
-const SCHEMA = `CREATE TABLE IF NOT EXISTS apps (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  url TEXT NOT NULL DEFAULT '',
-  description TEXT NOT NULL DEFAULT '',
-  tags TEXT NOT NULL DEFAULT '',
-  status TEXT NOT NULL CHECK (status IN ('idea','building','live','archived')),
-  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-)`
-
-let auth, app, schemaReady
+const MAX_ICON = 300_000 // data URL chars; client resizes to 256px so real icons are ~20-60 KB
 
 const json = (data, status = 200) =>
-  Response.json(data, { status, headers: { 'Cache-Control': 'private, no-store' } })
+  Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } })
+
+// Constant-time compare via SHA-256 digests (equal length).
+async function sameSecret(a, b) {
+  if (!a || !b) return false
+  const enc = new TextEncoder()
+  const [x, y] = await Promise.all([a, b].map((s) => crypto.subtle.digest('SHA-256', enc.encode(s))))
+  return crypto.subtle.timingSafeEqual(x, y)
+}
+
+function normalizeUrl(raw) {
+  let u = String(raw ?? '').trim()
+  if (u && !/^[a-z][a-z0-9+.-]*:/i.test(u)) u = `https://${u}`
+  try {
+    const parsed = new URL(u)
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : null
+  } catch {
+    return null
+  }
+}
 
 function validate(body) {
   const name = String(body?.name ?? '').trim()
-  const url = String(body?.url ?? '').trim()
+  const url = normalizeUrl(body?.url)
   const description = String(body?.description ?? '').trim()
-  const tags = String(body?.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean).join(',')
-  const status = String(body?.status ?? 'idea')
-  if (!name || name.length > 120) return { error: 'name required (max 120 chars)' }
-  if (url && !/^https?:\/\/\S+$/i.test(url)) return { error: 'url must start with http:// or https://' }
-  if (description.length > 500) return { error: 'description max 500 chars' }
-  if (!STATUSES.includes(status)) return { error: 'bad status' }
-  return { row: { name, url, description, tags, status } }
+  const icon = String(body?.icon ?? '')
+  if (!name || name.length > 80) return { error: 'Name is required (max 80 characters).' }
+  if (!url) return { error: 'Enter a valid web address.' }
+  if (description.length > 300) return { error: 'Description max 300 characters.' }
+  if (icon && (!/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(icon) || icon.length > MAX_ICON))
+    return { error: 'Icon must be a PNG, JPEG, WebP or GIF under 200 KB.' }
+  return { row: { name, url, description, icon } }
 }
 
-async function handler(request, env) {
-  const url = new URL(request.url)
-  if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request)
-
-  schemaReady ??= env.DB.prepare(SCHEMA).run()
-  await schemaReady
-
-  if (url.pathname === '/api/me') {
-    const user = await auth.getUser(request)
-    const sub = user?.sub ?? null
-    return json({ sub, name: user?.name ?? null, owner: !!sub && sub === env.OWNER_ID })
-  }
-
+async function handleApi(request, env, url) {
   if (url.pathname === '/api/apps' && request.method === 'GET') {
-    const { results } = await env.DB.prepare('SELECT * FROM apps ORDER BY created_at DESC').all()
-    return Response.json(results, { headers: { 'Cache-Control': 'no-store' } })
+    const { results } = await env.DB.prepare(
+      'SELECT id, name, url, description, icon, position FROM apps ORDER BY position, created_at',
+    ).all()
+    return json(results)
   }
 
-  // Everything below mutates: same-origin + owner only.
-  if (!isSameOriginRequest(request, env.APP_ORIGIN)) return json({ error: 'bad origin' }, 403)
-  const user = await auth.getUser(request)
-  if (!user) return json({ error: 'sign in required' }, 401)
-  if (!env.OWNER_ID || user.sub !== env.OWNER_ID) return json({ error: 'owner only' }, 403)
+  // Everything else needs the admin password.
+  const token = request.headers.get('Authorization')?.replace(/^Bearer /, '')
+  if (!(await sameSecret(token, env.ADMIN_PASSWORD))) return json({ error: 'Wrong password.' }, 401)
 
-  const match = url.pathname.match(/^\/api\/apps(?:\/([\w-]+))?$/)
-  if (!match) return json({ error: 'not found' }, 404)
-  const id = match[1]
+  if (url.pathname === '/api/auth') return new Response(null, { status: 204 })
 
-  if (request.method === 'POST' && !id) {
+  const id = url.pathname.match(/^\/api\/apps(?:\/([\w-]+))?$/)?.[1]
+  const isCollection = url.pathname === '/api/apps'
+
+  if (isCollection && request.method === 'POST') {
     const v = validate(await request.json().catch(() => null))
     if (v.error) return json(v, 400)
-    const r = v.row
+    const { name, url: link, description, icon } = v.row
     const newId = crypto.randomUUID()
-    await env.DB.prepare('INSERT INTO apps (id,name,url,description,tags,status) VALUES (?,?,?,?,?,?)')
-      .bind(newId, r.name, r.url, r.description, r.tags, r.status).run()
-    return json(await env.DB.prepare('SELECT * FROM apps WHERE id=?').bind(newId).first(), 201)
+    await env.DB.prepare(
+      'INSERT INTO apps (id, name, url, description, icon, position) VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(position), 0) + 1 FROM apps))',
+    ).bind(newId, name, link, description, icon).run()
+    return json({ id: newId }, 201)
   }
-  if (request.method === 'PUT' && id) {
+  if (id && request.method === 'PUT') {
     const v = validate(await request.json().catch(() => null))
     if (v.error) return json(v, 400)
-    const r = v.row
-    const res = await env.DB.prepare('UPDATE apps SET name=?,url=?,description=?,tags=?,status=? WHERE id=?')
-      .bind(r.name, r.url, r.description, r.tags, r.status, id).run()
-    if (!res.meta.changes) return json({ error: 'not found' }, 404)
-    return json(await env.DB.prepare('SELECT * FROM apps WHERE id=?').bind(id).first())
+    const { name, url: link, description, icon } = v.row
+    const res = await env.DB.prepare('UPDATE apps SET name = ?, url = ?, description = ?, icon = ? WHERE id = ?')
+      .bind(name, link, description, icon, id).run()
+    return res.meta.changes ? json({ id }) : json({ error: 'Not found.' }, 404)
   }
-  if (request.method === 'DELETE' && id) {
-    await env.DB.prepare('DELETE FROM apps WHERE id=?').bind(id).run()
+  if (id && request.method === 'DELETE') {
+    await env.DB.prepare('DELETE FROM apps WHERE id = ?').bind(id).run()
     return new Response(null, { status: 204 })
   }
-  return json({ error: 'method not allowed' }, 405)
+  return json({ error: 'Not found.' }, 404)
 }
 
 export default {
-  fetch(request, env) {
-    auth ??= createFreebuffAuth({ clientId: env.FREEBUFF_CLIENT_ID, issuer: env.FREEBUFF_ISSUER, baseUrl: env.APP_ORIGIN, allowInsecureLocalhost: env.APP_ORIGIN.startsWith('http://localhost') })
-    app ??= auth.wrap(handler)
-    return app(request, env)
+  async fetch(request, env) {
+    const url = new URL(request.url)
+    if (url.pathname.startsWith('/api/')) return handleApi(request, env, url)
+    return env.ASSETS.fetch(request)
   },
 }

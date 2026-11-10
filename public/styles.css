@@ -1,0 +1,154 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f0f2f5;
+  --border: #e3e6eb;
+  --text: #14171c;
+  --muted: #667085;
+  --accent: #4f6bed;
+  --accent-text: #ffffff;
+  --danger: #d92d20;
+  --radius: 16px;
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0f13;
+    --surface: #161a20;
+    --surface-2: #1d222a;
+    --border: #262c36;
+    --text: #eef0f4;
+    --muted: #8d96a7;
+    --accent: #7b91ff;
+    --accent-text: #0d0f13;
+    --danger: #ff6b5f;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+img { display: block; }
+[hidden] { display: none !important; }
+
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 48px max(20px, env(safe-area-inset-left));
+}
+
+/* Header */
+.top { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.top h1 { margin: 0; font-size: clamp(26px, 5vw, 34px); letter-spacing: -0.02em; line-height: 1.1; }
+.top p { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+.top .spacer { flex: 1; }
+
+.icon-btn {
+  display: inline-grid; place-items: center;
+  width: 44px; height: 44px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  text-decoration: none; cursor: pointer;
+}
+.icon-btn:hover { background: var(--surface-2); }
+.icon-btn svg { width: 20px; height: 20px; }
+
+/* Inputs & buttons */
+input, textarea, button { font: inherit; color: inherit; }
+input[type="text"], input[type="url"], input[type="search"], input[type="password"], textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 16px; /* prevents iOS zoom */
+}
+textarea { resize: vertical; min-height: 64px; }
+input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; padding: 0 18px;
+  border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-weight: 600; font-size: 15px;
+  text-decoration: none;
+}
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: transparent; color: var(--accent-text); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.danger { color: var(--danger); }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+
+/* Search */
+.search { position: relative; margin-bottom: 20px; }
+.search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.search input { padding-left: 42px; }
+
+/* App icon */
+.app-icon {
+  flex: none; width: 56px; height: 56px; border-radius: 14px;
+  object-fit: cover; background: var(--surface-2);
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 22px; color: #fff;
+}
+
+/* Catalog grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow);
+  text-decoration: none;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.card .body { min-width: 0; flex: 1; }
+.card h2 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+.card .host { color: var(--accent); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .desc { margin: 2px 0 0; color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card .arrow { flex: none; color: var(--muted); width: 18px; height: 18px; }
+
+.empty { color: var(--muted); text-align: center; padding: 48px 16px; }
+
+/* Settings */
+.panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px;
+}
+.panel h2 { margin: 0 0 14px; font-size: 18px; }
+.section-title { margin: 28px 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+.app-form { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; }
+.app-form .fields { display: grid; gap: 10px; min-width: 0; }
+.app-form label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.app-form .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.app-form .status { font-size: 14px; color: var(--muted); }
+.app-form .status.error { color: var(--danger); }
+.icon-picker { display: grid; gap: 8px; justify-items: center; width: 88px; }
+.icon-picker .app-icon { width: 72px; height: 72px; border-radius: 18px; font-size: 28px; }
+.icon-picker .link { background: none; border: 0; padding: 4px; color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; }
+.icon-picker .link.remove { color: var(--muted); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.login { max-width: 380px; margin: 12vh auto 0; }
+.login form { display: grid; gap: 12px; }
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; gap: 10px; }
+  .card { padding: 14px; }
+  .app-form { grid-template-columns: 1fr; }
+  .icon-picker { width: auto; display: flex; align-items: center; gap: 12px; }
+  .app-form .status:empty { display: none; }
+  .app-form .status { flex-basis: 100%; }
+  .app-form .actions .btn { flex: 1; }
+  .panel { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }

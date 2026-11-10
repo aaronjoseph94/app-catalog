@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Settings · Apps</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f6bed'/><g fill='white'><rect x='7' y='7' width='7' height='7' rx='2'/><rect x='18' y='7' width='7' height='7' rx='2'/><rect x='7' y='18' width='7' height='7' rx='2'/><rect x='18' y='18' width='7' height='7' rx='2'/></g></svg>">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="icon-btn" href="/" aria-label="Back to apps" title="Back to apps">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+    </a>
+    <div><h1>Settings</h1></div>
+    <span class="spacer"></span>
+    <button id="lock" class="btn" type="button" hidden>Lock</button>
+  </header>
+
+  <section id="login" class="login panel" hidden>
+    <h2>Enter admin password</h2>
+    <form id="login-form">
+      <label class="visually-hidden" for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <button class="btn primary" type="submit">Unlock</button>
+      <p id="login-err" class="status error" role="alert"></p>
+    </form>
+  </section>
+
+  <div id="admin" hidden>
+    <h2 class="section-title">Add app</h2>
+    <div id="add" class="panel"></div>
+
+    <h2 class="section-title">Your apps</h2>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script type="module">
+import { esc, iconHtml } from '/common.js'
+
+const KEY = 'catalog-admin-password'
+let password = localStorage.getItem(KEY) || ''
+const $ = (id) => document.getElementById(id)
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${password}` },
+  })
+  if (res.status === 401) { lock(); throw new Error('Wrong password.') }
+  if (res.status === 204) return null
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(body.error || 'Something went wrong.')
+  return body
+}
+
+// Resize to a 256px square (cover crop) so uploads stay small.
+async function toIcon(file) {
+  const img = await createImageBitmap(file)
+  const size = 256
+  const canvas = Object.assign(document.createElement('canvas'), { width: size, height: size })
+  const s = Math.min(img.width, img.height)
+  canvas.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size)
+  return canvas.toDataURL('image/webp', 0.85)
+}
+
+function formHtml(app) {
+  const isNew = !app.id
+  const uid = app.id || 'new'
+  return `
+  <form class="app-form" data-id="${esc(app.id || '')}" novalidate>
+    <div class="icon-picker">
+      <span class="preview">${iconHtml(app)}</span>
+      <label class="link" for="file-${uid}">${app.icon ? 'Change icon' : 'Upload icon'}</label>
+      <input id="file-${uid}" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+      <button type="button" class="link remove" data-act="remove-icon" ${app.icon ? '' : 'hidden'}>Remove</button>
+    </div>
+    <div class="fields">
+      <label>Name <input type="text" name="name" value="${esc(app.name || '')}" maxlength="80" required></label>
+      <label>URL <input type="url" name="url" value="${esc(app.url || '')}" placeholder="example.com" inputmode="url" autocapitalize="off" required></label>
+      <label>Description <textarea name="description" maxlength="300" rows="2">${esc(app.description || '')}</textarea></label>
+      <div class="actions">
+        <button class="btn primary" type="submit">${isNew ? 'Add app' : 'Save'}</button>
+        ${isNew ? '' : '<button class="btn danger" type="button" data-act="delete">Delete</button>'}
+        <span class="status" role="status"></span>
+      </div>
+    </div>
+  </form>`
+}
+
+function wire(form, app) {
+  let icon = app.icon || ''
+  const status = form.querySelector('.status')
+  const say = (msg, isError) => { status.textContent = msg; status.classList.toggle('error', !!isError) }
+  const showIcon = () => {
+    form.querySelector('.preview').innerHTML = iconHtml({ name: form.elements.name.value || app.name, icon })
+    form.querySelector('[data-act="remove-icon"]').hidden = !icon
+  }
+
+  form.querySelector('input[type="file"]').addEventListener('change', async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    try { icon = await toIcon(file); showIcon(); say('Icon ready. Save to keep it.') }
+    catch { say('Could not read that image.', true) }
+    e.target.value = ''
+  })
+  form.querySelector('[data-act="remove-icon"]').addEventListener('click', () => { icon = ''; showIcon(); say('Icon removed. Save to keep it.') })
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    if (!form.elements.name.value.trim() || !form.elements.url.value.trim()) return say('Name and URL are required.', true)
+    const btn = form.querySelector('button[type="submit"]')
+    btn.disabled = true
+    say('Saving…')
+    const body = JSON.stringify({ name: form.elements.name.value, url: form.elements.url.value, description: form.elements.description.value, icon })
+    try {
+      if (app.id) { await api(`/api/apps/${app.id}`, { method: 'PUT', body }); say('Saved.') }
+      else { await api('/api/apps', { method: 'POST', body }); await load(); return }
+    } catch (err) { say(err.message, true) }
+    btn.disabled = false
+  })
+
+  form.querySelector('[data-act="delete"]')?.addEventListener('click', async () => {
+    if (!confirm(`Delete "${app.name}" from the catalog?`)) return
+    try { await api(`/api/apps/${app.id}`, { method: 'DELETE' }); form.closest('.panel').remove() }
+    catch (err) { say(err.message, true) }
+  })
+}
+
+async function load() {
+  const apps = await (await fetch('/api/apps')).json()
+  $('add').innerHTML = formHtml({})
+  wire($('add').firstElementChild, {})
+  $('list').innerHTML = apps.length ? apps.map((a) => `<div class="panel">${formHtml(a)}</div>`).join('') : '<p class="empty">No apps yet.</p>'
+  $('list').querySelectorAll('.app-form').forEach((f, i) => wire(f, apps[i]))
+}
+
+function lock() {
+  password = ''
+  localStorage.removeItem(KEY)
+  $('admin').hidden = true
+  $('lock').hidden = true
+  $('login').hidden = false
+  $('pw').focus()
+}
+
+async function unlock() {
+  await api('/api/auth')
+  $('login').hidden = true
+  $('admin').hidden = false
+  $('lock').hidden = false
+  await load()
+}
+
+$('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  password = $('pw').value
+  try { await unlock(); localStorage.setItem(KEY, password); $('pw').value = ''; $('login-err').textContent = '' }
+  catch (err) { $('login-err').textContent = err.message }
+})
+$('lock').addEventListener('click', lock)
+
+if (password) unlock().catch(lock)
+else lock()
+</script>
+</body>
+</html>

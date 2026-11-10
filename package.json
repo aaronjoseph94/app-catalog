@@ -1,12 +1,10 @@
 {
-  "name": "vibe-catalog",
+  "name": "app-catalog",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev"
-  },
-  "dependencies": {
-    "@freebuff/auth": "latest"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
   "devDependencies": {
     "wrangler": "^4"
