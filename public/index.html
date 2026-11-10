@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050505">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Apps">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
 <meta name="description" content="Apps built by Aaron Joseph.">
 <title>Apps · Aaron Joseph</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop stop-color='%23a78bfa'/><stop offset='1' stop-color='%236ee7b7'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><g fill='%23050505' opacity='.85'><rect x='8' y='8' width='7' height='7' rx='2'/><rect x='17' y='8' width='7' height='7' rx='2'/><rect x='8' y='17' width='7' height='7' rx='2'/><rect x='17' y='17' width='7' height='7' rx='2'/></g></svg>">
@@ -19,24 +25,20 @@
   <a class="pill" href="/settings">Settings <span class="pill-ic"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.6"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"/></svg></span></a>
 </nav>
 
-<div class="page">
-  <header class="hero">
-    <div>
-      <span class="eyebrow reveal" style="--i:0"><span class="dot"></span><span id="count">Index</span></span>
-      <h1 class="display reveal" style="--i:1">Apps I've<br><span class="soft">built.</span></h1>
-    </div>
-    <div class="hero-side">
-      <p class="lede reveal" style="--i:2">A running index of the small tools, quizzes and trackers I've built.</p>
-      <label class="field reveal" style="--i:3">
-        <span class="visually-hidden">Search apps</span>
-        <svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
-        <input id="q" type="search" placeholder="Search the index" autocomplete="off">
-      </label>
-    </div>
+<div class="page home">
+  <header class="home-head">
+    <span class="eyebrow reveal" style="--i:0"><span class="dot"></span><span id="count">Index</span></span>
+    <h1 class="home-title reveal" style="--i:1">Apps I've <span class="soft">built.</span></h1>
+    <label class="field reveal" style="--i:2">
+      <span class="visually-hidden">Search apps</span>
+      <svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+      <input id="q" type="search" placeholder="Search apps" autocomplete="off">
+    </label>
   </header>
 
-  <div class="section-head reveal"><span>The collection</span><span id="shown"></span></div>
-  <main id="grid" class="bento" aria-live="polite"></main>
+  <section class="bezel screen reveal" style="--i:3" aria-label="Apps"><div class="core">
+    <main id="grid" class="springboard" aria-live="polite"></main>
+  </div></section>
 
   <footer class="foot"><span>© <span id="yr"></span> Aaron Joseph</span><span>apps.aaronjoseph.ca</span></footer>
 </div>
