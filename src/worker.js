@@ -4,14 +4,24 @@ const PBKDF2_ITERATIONS = 100_000
 const SESSION_DAYS = 30
 const MIN_PASSWORD = 12
 const MAX_PASSWORD = 256
+// ponytail: per-IP failure count in D1; a burst of parallel guesses can slip a few past the cap,
+// and an attacker with many IPs is only slowed. Add a Cloudflare rate-limiting rule if that matters.
+const LOGIN_WINDOW_MS = 15 * 60_000
+const LOGIN_MAX_FAILURES = 10
+const MAX_AUTH_BODY = 4_096
+const MAX_APP_BODY = 400_000 // icon cap plus the other fields
 
 const enc = new TextEncoder()
 const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)))
 const unb64 = (str) => Uint8Array.from(atob(str), (c) => c.charCodeAt(0))
 const sha256 = async (str) => b64(await crypto.subtle.digest('SHA-256', enc.encode(str)))
 
-const json = (data, status = 200) =>
-  Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } })
+const json = (data, status = 200, extra = {}) =>
+  Response.json(data, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...extra } })
+
+// ponytail: trusts Content-Length; a chunked body without it still hits the platform request limit.
+const tooBig = (request, max) => Number(request.headers.get('Content-Length') || 0) > max
+const readBody = (request) => request.json().catch(() => null)
 
 // Constant-time compare via SHA-256 digests (equal length).
 async function sameSecret(a, b) {
@@ -77,7 +87,7 @@ function validate(body) {
   if (!url) return { error: 'Enter a valid web address.' }
   if (description.length > 300) return { error: 'Description max 300 characters.' }
   if (icon && (!/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(icon) || icon.length > MAX_ICON))
-    return { error: 'Icon must be a PNG, JPEG, WebP or GIF under 200 KB.' }
+    return { error: 'Icon must be a PNG, JPEG, WebP or GIF under 220 KB.' }
   return { row: { name, url, description, icon } }
 }
 
@@ -90,9 +100,26 @@ async function handleApi(request, env, url) {
   }
 
   if (url.pathname === '/api/login' && request.method === 'POST') {
-    const body = await request.json().catch(() => null)
-    if (!(await checkPassword(env, body?.password))) return json({ error: 'Wrong password.' }, 401)
-    await env.DB.prepare('DELETE FROM sessions WHERE expires_at <= ?').bind(Date.now()).run()
+    if (tooBig(request, MAX_AUTH_BODY)) return json({ error: 'Request too large.' }, 413)
+    // Rate gate runs before any password hashing so blocked guesses cost almost nothing.
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown'
+    const since = Date.now() - LOGIN_WINDOW_MS
+    const { n } = await env.DB.prepare('SELECT COUNT(*) AS n FROM login_failures WHERE ip = ? AND at > ?').bind(ip, since).first()
+    if (n >= LOGIN_MAX_FAILURES)
+      return json({ error: 'Too many attempts. Try again in 15 minutes.' }, 429, { 'Retry-After': String(LOGIN_WINDOW_MS / 1000) })
+
+    const body = await readBody(request)
+    if (!(await checkPassword(env, body?.password))) {
+      await env.DB.batch([
+        env.DB.prepare('INSERT INTO login_failures (ip, at) VALUES (?, ?)').bind(ip, Date.now()),
+        env.DB.prepare('DELETE FROM login_failures WHERE at <= ?').bind(since),
+      ])
+      return json({ error: 'Wrong password.' }, 401)
+    }
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM login_failures WHERE ip = ?').bind(ip),
+      env.DB.prepare('DELETE FROM sessions WHERE expires_at <= ?').bind(Date.now()),
+    ])
     return json({ token: await createSession(env) })
   }
 
@@ -108,7 +135,8 @@ async function handleApi(request, env, url) {
   }
 
   if (url.pathname === '/api/password' && request.method === 'POST') {
-    const body = await request.json().catch(() => null)
+    if (tooBig(request, MAX_AUTH_BODY)) return json({ error: 'Request too large.' }, 413)
+    const body = await readBody(request)
     if (!(await checkPassword(env, body?.current))) return json({ error: 'Current password is wrong.' }, 400)
     const next = typeof body?.next === 'string' ? body.next : ''
     if (next.length < MIN_PASSWORD || next.length > MAX_PASSWORD)
@@ -126,7 +154,8 @@ async function handleApi(request, env, url) {
   const isCollection = url.pathname === '/api/apps'
 
   if (isCollection && request.method === 'POST') {
-    const v = validate(await request.json().catch(() => null))
+    if (tooBig(request, MAX_APP_BODY)) return json({ error: 'Request too large.' }, 413)
+    const v = validate(await readBody(request))
     if (v.error) return json(v, 400)
     const { name, url: link, description, icon } = v.row
     const newId = crypto.randomUUID()
@@ -136,7 +165,8 @@ async function handleApi(request, env, url) {
     return json({ id: newId }, 201)
   }
   if (id && request.method === 'PUT') {
-    const v = validate(await request.json().catch(() => null))
+    if (tooBig(request, MAX_APP_BODY)) return json({ error: 'Request too large.' }, 413)
+    const v = validate(await readBody(request))
     if (v.error) return json(v, 400)
     const { name, url: link, description, icon } = v.row
     const res = await env.DB.prepare('UPDATE apps SET name = ?, url = ?, description = ?, icon = ? WHERE id = ?')

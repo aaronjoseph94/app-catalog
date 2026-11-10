@@ -3,3 +3,8 @@ dist
 .wrangler
 .dev.vars
 secrets/
+.env
+.env.*
+*.pem
+*.key
+dev.log

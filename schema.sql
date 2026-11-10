@@ -21,3 +21,10 @@ CREATE TABLE IF NOT EXISTS sessions (
   token_hash TEXT PRIMARY KEY,
   expires_at INTEGER NOT NULL
 );
+
+-- Failed login attempts per client IP, used to rate-limit password guessing.
+CREATE TABLE IF NOT EXISTS login_failures (
+  ip TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS login_failures_ip_at ON login_failures (ip, at);
