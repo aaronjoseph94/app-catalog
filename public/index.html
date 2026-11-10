@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#050505">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,29 +19,28 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/styles.css">
 </head>
-<body>
-<nav class="nav" aria-label="Main">
-  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Aaron Joseph</span></a>
-  <span class="nav-sep" aria-hidden="true"></span>
-  <a class="pill" href="/settings">Settings <span class="pill-ic"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.6"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"/></svg></span></a>
-</nav>
-
-<div class="page home">
-  <header class="home-head">
-    <span class="eyebrow reveal" style="--i:0"><span class="dot"></span><span id="count">Index</span></span>
-    <h1 class="home-title reveal" style="--i:1">Apps I've <span class="soft">built.</span></h1>
-    <label class="field reveal" style="--i:2">
-      <span class="visually-hidden">Search apps</span>
-      <svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
-      <input id="q" type="search" placeholder="Search apps" autocomplete="off">
-    </label>
+<body class="wallpaper">
+<div class="page">
+  <header class="topbar">
+    <div>
+      <p class="overline" id="today"></p>
+      <h1 class="large-title">Apps</h1>
+    </div>
+    <a class="round-btn" href="/settings" aria-label="Settings" title="Settings"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></a>
   </header>
 
-  <section class="bezel screen reveal" style="--i:3" aria-label="Apps"><div class="core">
-    <main id="grid" class="springboard" aria-live="polite"></main>
-  </div></section>
+  <label class="search">
+    <span class="visually-hidden">Search apps</span>
+    <svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+    <input id="q" type="search" placeholder="Search" autocomplete="off">
+  </label>
 
-  <footer class="foot"><span>© <span id="yr"></span> Aaron Joseph</span><span>Some icons: <a href="https://fontawesome.com/license/free" target="_blank" rel="noopener">Font Awesome</a> (CC BY 4.0)</span></footer>
+  <main id="grid" class="springboard" aria-live="polite"></main>
+
+  <footer class="foot">
+    <div>© <span id="yr"></span> Aaron Joseph</div>
+    <div>Icons by <a href="https://icons8.com" target="_blank" rel="noopener">Icons8</a>, <a href="https://fontawesome.com/license/free" target="_blank" rel="noopener">Font Awesome</a> (CC BY 4.0) and <a href="https://game-icons.net" target="_blank" rel="noopener">Delapouite / game-icons.net</a> (CC BY 3.0)</div>
+  </footer>
 </div>
 
 <script type="module" src="/index.js"></script>

@@ -26,16 +26,6 @@ export const ICON = {
   arrow: '<svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5"/></svg>',
   plus: '<svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   trash: '<svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12M9 7V4h6v3"/></svg>',
+  chevron: '<svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
   image: '<svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="9" cy="9" r="1.6"/><path d="m20.5 15-4.5-4.5L5 20.5"/></svg>',
-}
-
-// Fade-up entry as elements reach the viewport. IntersectionObserver only, no scroll listeners.
-const io = 'IntersectionObserver' in window
-  ? new IntersectionObserver((entries) => {
-      for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) }
-    }, { rootMargin: '0px 0px -8% 0px' })
-  : null
-
-export function reveal(root = document) {
-  root.querySelectorAll('.reveal:not(.in)').forEach((el) => (io ? io.observe(el) : el.classList.add('in')))
 }

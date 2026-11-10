@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#050505">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="robots" content="noindex">
 <title>Settings · Apps</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop stop-color='%23a78bfa'/><stop offset='1' stop-color='%236ee7b7'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><g fill='%23050505' opacity='.85'><rect x='8' y='8' width='7' height='7' rx='2'/><rect x='17' y='8' width='7' height='7' rx='2'/><rect x='8' y='17' width='7' height='7' rx='2'/><rect x='17' y='17' width='7' height='7' rx='2'/></g></svg>">
@@ -13,58 +14,50 @@
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<nav class="nav" aria-label="Main">
-  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Aaron Joseph</span></a>
-  <span class="nav-sep" aria-hidden="true"></span>
-  <a class="pill no-ic" href="/">Catalog</a>
-  <button id="lock" class="pill no-ic" type="button" hidden>Lock</button>
-</nav>
+<div class="page settings">
+  <div class="settings-bar">
+    <a class="back-link" href="/"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Apps</a>
+    <button id="lock" class="text-btn" type="button" hidden>Lock</button>
+  </div>
+  <header class="topbar"><h1 class="large-title">Settings</h1></header>
 
-<div class="page">
-  <header class="hero compact">
-    <div>
-      <span class="eyebrow reveal" style="--i:0"><span class="dot"></span>Admin</span>
-      <h1 class="display reveal" style="--i:1">Settings<span class="soft">.</span></h1>
-    </div>
-  </header>
-
-  <section id="login" class="login reveal" style="--i:2" hidden>
-    <div class="bezel panel"><div class="core">
-      <h2>Unlock editing</h2>
+  <section id="login" class="login" hidden>
+    <div class="group group-pad">
+      <h2 class="panel-title">Unlock editing</h2>
       <p class="hint">Enter the admin password to add, edit and remove apps.</p>
       <form id="login-form">
         <label class="input-shell"><span class="visually-hidden">Password</span><input id="pw" type="password" autocomplete="current-password" placeholder="Password" required></label>
         <div class="actions">
-          <button class="pill primary" type="submit">Unlock <span class="pill-ic"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+          <button class="pill primary" type="submit">Unlock</button>
           <span id="login-err" class="status error" role="alert"></span>
         </div>
       </form>
-    </div></div>
+    </div>
   </section>
 
   <div id="admin" hidden>
-    <div class="section-head"><span>New entry</span></div>
-    <div id="add" class="stack"></div>
+    <h2 class="group-title"><span>New app</span></h2>
+    <div id="add" class="group"></div>
 
-    <div class="section-head" style="margin-top:56px"><span>The collection</span><span id="n"></span></div>
-    <div id="list" class="stack"></div>
+    <h2 class="group-title"><span>Apps</span><span id="n"></span></h2>
+    <div id="list" class="group"></div>
 
-    <div class="section-head" style="margin-top:56px"><span>Security</span></div>
-    <div class="bezel panel reveal"><div class="core">
-      <h2 class="panel-title">Change password</h2>
-      <p class="hint">At least 12 characters. Every other signed-in device is signed out.</p>
+    <h2 class="group-title"><span>Security</span></h2>
+    <div class="group group-pad">
+      <h3 class="panel-title">Change password</h3>
       <form id="pw-form" class="app-form" novalidate>
         <div class="fields">
-          <label class="label full">Current password<span class="input-shell"><input id="pw-current" type="password" autocomplete="current-password" required></span></label>
+          <label class="label">Current password<span class="input-shell"><input id="pw-current" type="password" autocomplete="current-password" required></span></label>
           <label class="label">New password<span class="input-shell"><input id="pw-next" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></span></label>
           <label class="label">Confirm new password<span class="input-shell"><input id="pw-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></span></label>
         </div>
         <div class="actions">
-          <button class="pill primary" type="submit">Update password <span class="pill-ic"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5"/></svg></span></button>
+          <button class="pill primary" type="submit">Update password</button>
           <span id="pw-status" class="status" role="status"></span>
         </div>
       </form>
-    </div></div>
+    </div>
+    <p class="group-note">At least 12 characters. Other signed-in devices are signed out.</p>
   </div>
 </div>
 

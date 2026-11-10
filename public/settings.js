@@ -1,4 +1,4 @@
-import { esc, host, iconHtml, ICON, reveal } from '/common.js'
+import { esc, host, iconHtml, ICON } from '/common.js'
 
 const KEY = 'catalog-admin-session'
 localStorage.removeItem('catalog-admin-password') // older builds stored the raw password
@@ -31,11 +31,11 @@ function itemHtml(app, i) {
   const isNew = !app.id
   const uid = esc(app.id || 'new')
   const summary = isNew
-    ? `<span class="app-icon" aria-hidden="true">${ICON.plus}</span><span class="meta"><div class="name">Add an app</div><div class="host">Name, link, icon</div></span>`
+    ? `<span class="app-icon" aria-hidden="true">${ICON.plus}</span><span class="meta"><div class="name">Add an app</div><div class="host">Name, link and icon</div></span>`
     : `<span class="sum-icon">${iconHtml(app)}</span><span class="meta"><div class="name">${esc(app.name)}</div><div class="host">${esc(host(app.url))}</div></span>`
   return `
   <div class="bezel app-item${isNew ? ' add' : ''} reveal" style="--i:${i % 6}"><details class="core">
-    <summary>${summary}<span class="chev" aria-hidden="true">${ICON.plus}</span></summary>
+    <summary>${summary}<span class="chev" aria-hidden="true">${ICON.chevron}</span></summary>
     <div class="drawer">
       <form class="app-form" novalidate>
         <div class="icon-picker">
@@ -118,7 +118,6 @@ async function load() {
   $('n').textContent = String(apps.length).padStart(2, '0')
   $('list').innerHTML = apps.length ? apps.map((a, i) => itemHtml(a, i + 1)).join('') : '<p class="empty">No apps yet.</p>'
   $('list').querySelectorAll('.app-item').forEach((el, i) => wire(el, apps[i]))
-  reveal()
 }
 
 function setToken(t) { token = t; localStorage.setItem(KEY, t) }
@@ -130,7 +129,6 @@ function lock() {
   $('lock').hidden = true
   $('login').hidden = false
   $('pw').focus()
-  reveal()
 }
 
 async function unlock() {
@@ -180,6 +178,5 @@ $('pw-form').addEventListener('submit', async (e) => {
   btn.disabled = false
 })
 
-reveal()
 if (token) unlock().catch(lock)
 else lock()
