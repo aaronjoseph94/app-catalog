@@ -346,7 +346,8 @@ body::after {
 
 .login { max-width: 460px; }
 .login h2, .panel-title { margin: 0 0 6px; font-size: 22px; font-weight: 500; letter-spacing: -0.03em; }
-.login p.hint { margin: 0 0 24px; color: var(--muted); font-size: 15px; }
+.hint { margin: 0 0 8px; color: var(--muted); font-size: 15px; }
+.login .hint { margin-bottom: 24px; }
 .login form { display: grid; gap: 14px; }
 
 .app-item > .core { padding: 0; }

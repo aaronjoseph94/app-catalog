@@ -48,22 +48,40 @@
 
     <div class="section-head" style="margin-top:56px"><span>The collection</span><span id="n"></span></div>
     <div id="list" class="stack"></div>
+
+    <div class="section-head" style="margin-top:56px"><span>Security</span></div>
+    <div class="bezel panel reveal"><div class="core">
+      <h2 class="panel-title">Change password</h2>
+      <p class="hint">At least 12 characters. Every other signed-in device is signed out.</p>
+      <form id="pw-form" class="app-form" novalidate>
+        <div class="fields">
+          <label class="label full">Current password<span class="input-shell"><input id="pw-current" type="password" autocomplete="current-password" required></span></label>
+          <label class="label">New password<span class="input-shell"><input id="pw-next" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></span></label>
+          <label class="label">Confirm new password<span class="input-shell"><input id="pw-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></span></label>
+        </div>
+        <div class="actions">
+          <button class="pill primary" type="submit">Update password <span class="pill-ic"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5"/></svg></span></button>
+          <span id="pw-status" class="status" role="status"></span>
+        </div>
+      </form>
+    </div></div>
   </div>
 </div>
 
 <script type="module">
 import { esc, host, iconHtml, ICON, reveal } from '/common.js'
 
-const KEY = 'catalog-admin-password'
-let password = localStorage.getItem(KEY) || ''
+const KEY = 'catalog-admin-session'
+localStorage.removeItem('catalog-admin-password') // older builds stored the raw password
+let token = localStorage.getItem(KEY) || ''
 const $ = (id) => document.getElementById(id)
 
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     ...opts,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${password}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
   })
-  if (res.status === 401) { lock(); throw new Error('Wrong password.') }
+  if (res.status === 401 && path !== '/api/login') { lock(); throw new Error('Please unlock again.') }
   if (res.status === 204) return null
   const body = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(body.error || 'Something went wrong.')
@@ -174,8 +192,10 @@ async function load() {
   reveal()
 }
 
+function setToken(t) { token = t; localStorage.setItem(KEY, t) }
+
 function lock() {
-  password = ''
+  token = ''
   localStorage.removeItem(KEY)
   $('admin').hidden = true
   $('lock').hidden = true
@@ -194,14 +214,44 @@ async function unlock() {
 
 $('login-form').addEventListener('submit', async (e) => {
   e.preventDefault()
-  password = $('pw').value
-  try { await unlock(); localStorage.setItem(KEY, password); $('pw').value = ''; $('login-err').textContent = '' }
-  catch (err) { $('login-err').textContent = err.message }
+  const btn = e.target.querySelector('button[type="submit"]')
+  btn.disabled = true
+  try {
+    const { token: t } = await api('/api/login', { method: 'POST', body: JSON.stringify({ password: $('pw').value }) })
+    setToken(t)
+    $('pw').value = ''
+    $('login-err').textContent = ''
+    await unlock()
+  } catch (err) { $('login-err').textContent = err.message }
+  btn.disabled = false
 })
-$('lock').addEventListener('click', lock)
+
+$('lock').addEventListener('click', async () => {
+  await api('/api/logout', { method: 'POST' }).catch(() => {})
+  lock()
+})
+
+$('pw-form').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const say = (msg, isError) => { $('pw-status').textContent = msg; $('pw-status').classList.toggle('error', !!isError) }
+  const current = $('pw-current').value
+  const next = $('pw-next').value
+  if (next.length < 12) return say('New password must be at least 12 characters.', true)
+  if (next !== $('pw-confirm').value) return say('New passwords do not match.', true)
+  const btn = e.target.querySelector('button[type="submit"]')
+  btn.disabled = true
+  say('Updating…')
+  try {
+    const { token: t } = await api('/api/password', { method: 'POST', body: JSON.stringify({ current, next }) })
+    setToken(t)
+    e.target.reset()
+    say('Password updated. Other devices are signed out.')
+  } catch (err) { say(err.message, true) }
+  btn.disabled = false
+})
 
 reveal()
-if (password) unlock().catch(lock)
+if (token) unlock().catch(lock)
 else lock()
 </script>
 </body>
