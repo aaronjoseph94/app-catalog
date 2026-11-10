@@ -172,8 +172,6 @@ button, input, textarea { font: inherit; color: inherit; letter-spacing: inherit
 .app-icon .ln { width: 20px; height: 20px; }
 
 .empty { grid-column: 1 / -1; margin: 0; padding: 40px 16px; color: var(--muted); text-align: center; font-size: 15px; }
-.foot { margin-top: 56px; color: var(--muted); font-size: 12px; text-align: center; line-height: 1.6; }
-.foot a { text-decoration: underline; text-underline-offset: 2px; }
 
 /* Entry animation: pure CSS so items always end up visible. */
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }

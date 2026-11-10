@@ -3,7 +3,6 @@ import { esc, iconHtml } from '/common.js'
 const grid = document.getElementById('grid')
 const q = document.getElementById('q')
 let apps = []
-document.getElementById('yr').textContent = new Date().getFullYear()
 document.getElementById('today').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
 function render() {
