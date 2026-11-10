@@ -3,67 +3,99 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d0f13" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="Apps built by Aaron Joseph.">
 <title>Apps · Aaron Joseph</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f6bed'/><g fill='white'><rect x='7' y='7' width='7' height='7' rx='2'/><rect x='18' y='7' width='7' height='7' rx='2'/><rect x='7' y='18' width='7' height='7' rx='2'/><rect x='18' y='18' width='7' height='7' rx='2'/></g></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop stop-color='%23a78bfa'/><stop offset='1' stop-color='%236ee7b7'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><g fill='%23050505' opacity='.85'><rect x='8' y='8' width='7' height='7' rx='2'/><rect x='17' y='8' width='7' height='7' rx='2'/><rect x='8' y='17' width='7' height='7' rx='2'/><rect x='17' y='17' width='7' height='7' rx='2'/></g></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
+<nav class="nav" aria-label="Main">
+  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Aaron Joseph</span></a>
+  <span class="nav-sep" aria-hidden="true"></span>
+  <a class="pill" href="/settings">Settings <span class="pill-ic"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.6"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"/></svg></span></a>
+</nav>
+
+<div class="page">
+  <header class="hero">
     <div>
-      <h1>Apps</h1>
-      <p>Things I've built.</p>
+      <span class="eyebrow reveal" style="--i:0"><span class="dot"></span><span id="count">Index</span></span>
+      <h1 class="display reveal" style="--i:1">Apps I've<br><span class="soft">built.</span></h1>
     </div>
-    <span class="spacer"></span>
-    <a class="icon-btn" href="/settings" aria-label="Settings" title="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </a>
+    <div class="hero-side">
+      <p class="lede reveal" style="--i:2">A running index of the small tools, quizzes and trackers I've built.</p>
+      <label class="field reveal" style="--i:3">
+        <span class="visually-hidden">Search apps</span>
+        <svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+        <input id="q" type="search" placeholder="Search the index" autocomplete="off">
+      </label>
+    </div>
   </header>
 
-  <div class="search">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <input id="q" type="search" placeholder="Search apps" aria-label="Search apps" autocomplete="off">
-  </div>
+  <div class="section-head reveal"><span>The collection</span><span id="shown"></span></div>
+  <main id="grid" class="bento" aria-live="polite"></main>
 
-  <main id="grid" class="grid" aria-live="polite"></main>
+  <footer class="foot"><span>© <span id="yr"></span> Aaron Joseph</span><span>apps.aaronjoseph.ca</span></footer>
 </div>
 
 <script type="module">
-import { esc, host, iconHtml } from '/common.js'
+import { esc, host, hue, iconHtml, ICON, reveal } from '/common.js'
 
 const grid = document.getElementById('grid')
 const q = document.getElementById('q')
 let apps = []
+document.getElementById('yr').textContent = new Date().getFullYear()
 
-const arrow = '<svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>'
+// Tile the bento with no holes: alternate [7 tall, 5, 5] and [4, 4, 4], close out with 6s or a 12.
+function sizes(n) {
+  const out = []
+  for (let row = 0; out.length < n; row++) {
+    const left = n - out.length
+    if (left === 1) out.push('s-12 wide')
+    else if (left === 2) out.push('s-6', 's-6')
+    else if (left === 4) out.push('s-6', 's-6', 's-6', 's-6')
+    else out.push(...(row % 2 ? ['s-4', 's-4', 's-4'] : ['s-7 tall', 's-5', 's-5']))
+  }
+  return out.slice(0, n)
+}
 
 function render() {
   const term = q.value.trim().toLowerCase()
   const list = apps.filter((a) => !term || `${a.name} ${a.description} ${a.url}`.toLowerCase().includes(term))
+  const size = sizes(list.length)
+  document.getElementById('shown').textContent = `${String(list.length).padStart(2, '0')} / ${String(apps.length).padStart(2, '0')}`
   grid.innerHTML = list.length
-    ? list.map((a) => `
-      <a class="card" href="${esc(a.url)}" target="_blank" rel="noopener">
-        ${iconHtml(a)}
-        <div class="body">
-          <h2>${esc(a.name)}</h2>
-          <div class="host">${esc(host(a.url))}</div>
-          ${a.description ? `<p class="desc">${esc(a.description)}</p>` : ''}
-        </div>
-        ${arrow}
-      </a>`).join('')
-    : `<p class="empty">${apps.length ? 'No apps match your search.' : 'No apps yet.'}</p>`
+    ? list.map((a, i) => `
+      <div class="${size[i]} reveal" style="--i:${i % 6}">
+        <a class="card" href="${esc(a.url)}" target="_blank" rel="noopener" style="--h:${hue(a.name)}">
+          <div class="bezel"><div class="core">
+            <div class="card-top">${iconHtml(a)}<span class="idx">${String(apps.indexOf(a) + 1).padStart(2, '0')}</span></div>
+            <div class="card-body">
+              <h2>${esc(a.name)}</h2>
+              <div class="host">${esc(host(a.url))}</div>
+              ${a.description ? `<p class="desc">${esc(a.description)}</p>` : ''}
+            </div>
+            <div class="card-foot"><span class="pill">Open <span class="pill-ic">${ICON.arrow}</span></span></div>
+          </div></div>
+        </a>
+      </div>`).join('')
+    : `<p class="empty">${apps.length ? 'Nothing in the index matches that.' : 'The index is empty.'}</p>`
+  reveal(grid)
 }
 
 q.addEventListener('input', render)
+reveal()
 
 try {
   apps = await (await fetch('/api/apps')).json()
+  document.getElementById('count').textContent = `Index · ${apps.length} apps`
+  render()
 } catch {
-  grid.innerHTML = '<p class="empty">Could not load apps. Try refreshing.</p>'
+  grid.innerHTML = '<p class="empty">Could not load the index. Try refreshing.</p>'
 }
-render()
 </script>
 </body>
 </html>

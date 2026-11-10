@@ -3,43 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
 <meta name="robots" content="noindex">
 <title>Settings · Apps</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f6bed'/><g fill='white'><rect x='7' y='7' width='7' height='7' rx='2'/><rect x='18' y='7' width='7' height='7' rx='2'/><rect x='7' y='18' width='7' height='7' rx='2'/><rect x='18' y='18' width='7' height='7' rx='2'/></g></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop stop-color='%23a78bfa'/><stop offset='1' stop-color='%236ee7b7'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23g)'/><g fill='%23050505' opacity='.85'><rect x='8' y='8' width='7' height='7' rx='2'/><rect x='17' y='8' width='7' height='7' rx='2'/><rect x='8' y='17' width='7' height='7' rx='2'/><rect x='17' y='17' width='7' height='7' rx='2'/></g></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <a class="icon-btn" href="/" aria-label="Back to apps" title="Back to apps">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
-    </a>
-    <div><h1>Settings</h1></div>
-    <span class="spacer"></span>
-    <button id="lock" class="btn" type="button" hidden>Lock</button>
+<nav class="nav" aria-label="Main">
+  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Aaron Joseph</span></a>
+  <span class="nav-sep" aria-hidden="true"></span>
+  <a class="pill no-ic" href="/">Catalog</a>
+  <button id="lock" class="pill no-ic" type="button" hidden>Lock</button>
+</nav>
+
+<div class="page">
+  <header class="hero compact">
+    <div>
+      <span class="eyebrow reveal" style="--i:0"><span class="dot"></span>Admin</span>
+      <h1 class="display reveal" style="--i:1">Settings<span class="soft">.</span></h1>
+    </div>
   </header>
 
-  <section id="login" class="login panel" hidden>
-    <h2>Enter admin password</h2>
-    <form id="login-form">
-      <label class="visually-hidden" for="pw">Password</label>
-      <input id="pw" type="password" autocomplete="current-password" required>
-      <button class="btn primary" type="submit">Unlock</button>
-      <p id="login-err" class="status error" role="alert"></p>
-    </form>
+  <section id="login" class="login reveal" style="--i:2" hidden>
+    <div class="bezel panel"><div class="core">
+      <h2>Unlock editing</h2>
+      <p class="hint">Enter the admin password to add, edit and remove apps.</p>
+      <form id="login-form">
+        <label class="input-shell"><span class="visually-hidden">Password</span><input id="pw" type="password" autocomplete="current-password" placeholder="Password" required></label>
+        <div class="actions">
+          <button class="pill primary" type="submit">Unlock <span class="pill-ic"><svg class="ln" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+          <span id="login-err" class="status error" role="alert"></span>
+        </div>
+      </form>
+    </div></div>
   </section>
 
   <div id="admin" hidden>
-    <h2 class="section-title">Add app</h2>
-    <div id="add" class="panel"></div>
+    <div class="section-head"><span>New entry</span></div>
+    <div id="add" class="stack"></div>
 
-    <h2 class="section-title">Your apps</h2>
-    <div id="list"></div>
+    <div class="section-head" style="margin-top:56px"><span>The collection</span><span id="n"></span></div>
+    <div id="list" class="stack"></div>
   </div>
 </div>
 
 <script type="module">
-import { esc, iconHtml } from '/common.js'
+import { esc, host, iconHtml, ICON, reveal } from '/common.js'
 
 const KEY = 'catalog-admin-password'
 let password = localStorage.getItem(KEY) || ''
@@ -67,36 +80,46 @@ async function toIcon(file) {
   return canvas.toDataURL('image/webp', 0.85)
 }
 
-function formHtml(app) {
+function itemHtml(app, i) {
   const isNew = !app.id
   const uid = app.id || 'new'
+  const summary = isNew
+    ? `<span class="app-icon" aria-hidden="true">${ICON.plus}</span><span class="meta"><div class="name">Add an app</div><div class="host">Name, link, icon</div></span>`
+    : `<span class="sum-icon">${iconHtml(app)}</span><span class="meta"><div class="name">${esc(app.name)}</div><div class="host">${esc(host(app.url))}</div></span>`
   return `
-  <form class="app-form" data-id="${esc(app.id || '')}" novalidate>
-    <div class="icon-picker">
-      <span class="preview">${iconHtml(app)}</span>
-      <label class="link" for="file-${uid}">${app.icon ? 'Change icon' : 'Upload icon'}</label>
-      <input id="file-${uid}" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
-      <button type="button" class="link remove" data-act="remove-icon" ${app.icon ? '' : 'hidden'}>Remove</button>
+  <div class="bezel app-item${isNew ? ' add' : ''} reveal" style="--i:${i % 6}"><details class="core">
+    <summary>${summary}<span class="chev" aria-hidden="true">${ICON.plus}</span></summary>
+    <div class="drawer">
+      <form class="app-form" novalidate>
+        <div class="icon-picker">
+          <span class="preview">${iconHtml(app)}</span>
+          <label class="pill" for="file-${uid}">${app.icon ? 'Change icon' : 'Upload icon'} <span class="pill-ic">${ICON.image}</span></label>
+          <input id="file-${uid}" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+          <button type="button" class="pill no-ic" data-act="remove-icon" ${app.icon ? '' : 'hidden'}>Remove</button>
+        </div>
+        <div class="fields">
+          <label class="label">Name<span class="input-shell"><input type="text" name="name" value="${esc(app.name || '')}" maxlength="80" required></span></label>
+          <label class="label">URL<span class="input-shell"><input type="url" name="url" value="${esc(app.url || '')}" placeholder="example.com" inputmode="url" autocapitalize="off" required></span></label>
+          <label class="label full">Description<span class="input-shell"><textarea name="description" maxlength="300" rows="2">${esc(app.description || '')}</textarea></span></label>
+        </div>
+        <div class="actions">
+          <button class="pill primary" type="submit">${isNew ? 'Add to catalog' : 'Save changes'} <span class="pill-ic">${isNew ? ICON.plus : ICON.arrow}</span></button>
+          ${isNew ? '' : `<button class="pill danger" type="button" data-act="delete">Delete <span class="pill-ic">${ICON.trash}</span></button>`}
+          <span class="status" role="status"></span>
+        </div>
+      </form>
     </div>
-    <div class="fields">
-      <label>Name <input type="text" name="name" value="${esc(app.name || '')}" maxlength="80" required></label>
-      <label>URL <input type="url" name="url" value="${esc(app.url || '')}" placeholder="example.com" inputmode="url" autocapitalize="off" required></label>
-      <label>Description <textarea name="description" maxlength="300" rows="2">${esc(app.description || '')}</textarea></label>
-      <div class="actions">
-        <button class="btn primary" type="submit">${isNew ? 'Add app' : 'Save'}</button>
-        ${isNew ? '' : '<button class="btn danger" type="button" data-act="delete">Delete</button>'}
-        <span class="status" role="status"></span>
-      </div>
-    </div>
-  </form>`
+  </details></div>`
 }
 
-function wire(form, app) {
+function wire(item, app) {
+  const form = item.querySelector('form')
+  const f = form.elements
   let icon = app.icon || ''
   const status = form.querySelector('.status')
   const say = (msg, isError) => { status.textContent = msg; status.classList.toggle('error', !!isError) }
   const showIcon = () => {
-    form.querySelector('.preview').innerHTML = iconHtml({ name: form.elements.name.value || app.name, icon })
+    form.querySelector('.preview').innerHTML = iconHtml({ name: f.name.value || app.name, icon })
     form.querySelector('[data-act="remove-icon"]').hidden = !icon
   }
 
@@ -111,31 +134,44 @@ function wire(form, app) {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
-    if (!form.elements.name.value.trim() || !form.elements.url.value.trim()) return say('Name and URL are required.', true)
+    if (!f.name.value.trim() || !f.url.value.trim()) return say('Name and URL are required.', true)
     const btn = form.querySelector('button[type="submit"]')
     btn.disabled = true
     say('Saving…')
-    const body = JSON.stringify({ name: form.elements.name.value, url: form.elements.url.value, description: form.elements.description.value, icon })
+    const data = { name: f.name.value, url: f.url.value, description: f.description.value, icon }
     try {
-      if (app.id) { await api(`/api/apps/${app.id}`, { method: 'PUT', body }); say('Saved.') }
-      else { await api('/api/apps', { method: 'POST', body }); await load(); return }
+      if (!app.id) { await api('/api/apps', { method: 'POST', body: JSON.stringify(data) }); await load(); return }
+      await api(`/api/apps/${app.id}`, { method: 'PUT', body: JSON.stringify(data) })
+      Object.assign(app, data)
+      const sum = item.querySelector('summary')
+      sum.querySelector('.name').textContent = f.name.value.trim()
+      sum.querySelector('.sum-icon').innerHTML = iconHtml(app)
+      // Show the normalized URL the server stored.
+      const fresh = (await (await fetch('/api/apps')).json()).find((a) => a.id === app.id)
+      if (fresh) { f.url.value = fresh.url; sum.querySelector('.host').textContent = host(fresh.url) }
+      say('Saved.')
     } catch (err) { say(err.message, true) }
     btn.disabled = false
   })
 
   form.querySelector('[data-act="delete"]')?.addEventListener('click', async () => {
     if (!confirm(`Delete "${app.name}" from the catalog?`)) return
-    try { await api(`/api/apps/${app.id}`, { method: 'DELETE' }); form.closest('.panel').remove() }
-    catch (err) { say(err.message, true) }
+    try {
+      await api(`/api/apps/${app.id}`, { method: 'DELETE' })
+      item.remove()
+      $('n').textContent = String($('list').children.length).padStart(2, '0')
+    } catch (err) { say(err.message, true) }
   })
 }
 
 async function load() {
   const apps = await (await fetch('/api/apps')).json()
-  $('add').innerHTML = formHtml({})
+  $('add').innerHTML = itemHtml({}, 0)
   wire($('add').firstElementChild, {})
-  $('list').innerHTML = apps.length ? apps.map((a) => `<div class="panel">${formHtml(a)}</div>`).join('') : '<p class="empty">No apps yet.</p>'
-  $('list').querySelectorAll('.app-form').forEach((f, i) => wire(f, apps[i]))
+  $('n').textContent = String(apps.length).padStart(2, '0')
+  $('list').innerHTML = apps.length ? apps.map((a, i) => itemHtml(a, i + 1)).join('') : '<p class="empty">No apps yet.</p>'
+  $('list').querySelectorAll('.app-item').forEach((el, i) => wire(el, apps[i]))
+  reveal()
 }
 
 function lock() {
@@ -145,6 +181,7 @@ function lock() {
   $('lock').hidden = true
   $('login').hidden = false
   $('pw').focus()
+  reveal()
 }
 
 async function unlock() {
@@ -163,6 +200,7 @@ $('login-form').addEventListener('submit', async (e) => {
 })
 $('lock').addEventListener('click', lock)
 
+reveal()
 if (password) unlock().catch(lock)
 else lock()
 </script>
