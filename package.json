@@ -1,0 +1,14 @@
+{
+  "name": "vibe-catalog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev"
+  },
+  "dependencies": {
+    "@freebuff/auth": "latest"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

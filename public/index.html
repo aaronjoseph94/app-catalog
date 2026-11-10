@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vibe Catalog</title>
+<style>
+  :root { color-scheme: dark; --bg:#0f1115; --card:#181b22; --line:#2a2f3a; --fg:#e6e8ee; --muted:#8b93a5; --accent:#7c9cff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:20px 24px; border-bottom:1px solid var(--line); }
+  h1 { margin:0 auto 0 0; font-size:22px; }
+  main { max-width:1100px; margin:0 auto; padding:24px; }
+  .toolbar { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+  input, select, textarea, button { font:inherit; color:inherit; background:#11141a; border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  input:focus, select:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  button { cursor:pointer; background:#1f2430; }
+  button.primary { background:var(--accent); color:#0b0d12; border-color:transparent; font-weight:600; }
+  button.danger { color:#ff8a8a; }
+  #search { flex:1; min-width:200px; }
+  form.editor { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; padding:16px; margin-bottom:24px; background:var(--card); border:1px solid var(--line); border-radius:12px; }
+  form.editor label { display:grid; gap:4px; font-size:13px; color:var(--muted); }
+  form.editor .wide { grid-column:1 / -1; }
+  form.editor .actions { grid-column:1 / -1; display:flex; gap:8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:8px; }
+  .card h2 { margin:0; font-size:17px; }
+  .card h2 a { color:var(--fg); text-decoration:none; }
+  .card h2 a:hover { color:var(--accent); }
+  .card p { margin:0; color:var(--muted); }
+  .meta { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:12px; }
+  .chip { background:#242a38; border-radius:999px; padding:2px 9px; }
+  .badge { border-radius:999px; padding:2px 9px; font-weight:600; text-transform:capitalize; }
+  .badge.idea { background:#3a3450; color:#c9b8ff; }
+  .badge.building { background:#4a3a14; color:#ffd27a; }
+  .badge.live { background:#17402a; color:#7fe0a7; }
+  .badge.archived { background:#2c2f36; color:#a3a9b7; }
+  .date { color:var(--muted); margin-left:auto; }
+  .card .row { display:flex; gap:6px; margin-top:auto; }
+  .empty { color:var(--muted); text-align:center; padding:40px; }
+  .hint { font-size:13px; color:var(--muted); }
+  code { background:#11141a; padding:1px 5px; border-radius:4px; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Vibe Catalog</h1>
+  <span id="who" class="hint"></span>
+  <a id="signin" href="/auth/freebuff/signin?returnTo=/"><button type="button">Sign in with Freebuff</button></a>
+  <form id="signout" method="post" action="/auth/freebuff/signout" hidden><button>Sign out</button></form>
+</header>
+<main>
+  <p id="owner-hint" class="hint" hidden></p>
+
+  <form id="editor" class="editor" hidden>
+    <input type="hidden" name="id">
+    <label>Name <input name="name" required maxlength="120" autocomplete="off"></label>
+    <label>URL <input name="url" type="url" placeholder="https://" autocomplete="off"></label>
+    <label>Status
+      <select name="status">
+        <option value="idea">Idea</option>
+        <option value="building">Building</option>
+        <option value="live">Live</option>
+        <option value="archived">Archived</option>
+      </select>
+    </label>
+    <label>Tags (comma separated) <input name="tags" placeholder="react, claude, cloudflare" autocomplete="off"></label>
+    <label class="wide">Description <textarea name="description" rows="2" maxlength="500"></textarea></label>
+    <div class="actions">
+      <button class="primary" type="submit">Save</button>
+      <button type="button" id="cancel" hidden>Cancel</button>
+      <span id="err" class="hint" role="alert"></span>
+    </div>
+  </form>
+
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="Search name, description, tags" aria-label="Search">
+    <select id="status-filter" aria-label="Filter by status">
+      <option value="">All statuses</option>
+      <option value="idea">Idea</option>
+      <option value="building">Building</option>
+      <option value="live">Live</option>
+      <option value="archived">Archived</option>
+    </select>
+  </div>
+
+  <div id="grid" class="grid" aria-live="polite"></div>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s)
+let apps = [], me = { sub: null, owner: false }
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))
+
+async function api(path, opts) {
+  const r = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts })
+  if (r.status === 204) return null
+  const body = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(body.error || r.statusText)
+  return body
+}
+
+function render() {
+  const q = $('#search').value.trim().toLowerCase()
+  const st = $('#status-filter').value
+  const list = apps.filter((a) =>
+    (!st || a.status === st) &&
+    (!q || `${a.name} ${a.description} ${a.tags}`.toLowerCase().includes(q)))
+  if (!list.length) { $('#grid').innerHTML = `<p class="empty">${apps.length ? 'No matches.' : 'No apps yet.'}</p>`; return }
+  $('#grid').innerHTML = list.map((a) => `
+    <article class="card" data-id="${esc(a.id)}">
+      <h2>${a.url ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.name)}</a>` : esc(a.name)}</h2>
+      ${a.description ? `<p>${esc(a.description)}</p>` : ''}
+      <div class="meta">
+        <span class="badge ${esc(a.status)}">${esc(a.status)}</span>
+        ${a.tags.split(',').filter(Boolean).map((t) => `<span class="chip">${esc(t)}</span>`).join('')}
+        <span class="date">${new Date(a.created_at).toLocaleDateString()}</span>
+      </div>
+      ${me.owner ? `<div class="row"><button data-act="edit">Edit</button><button data-act="del" class="danger">Delete</button></div>` : ''}
+    </article>`).join('')
+}
+
+function fillForm(a) {
+  const f = $('#editor')
+  f.id.value = a?.id ?? ''
+  f.name.value = a?.name ?? ''
+  f.url.value = a?.url ?? ''
+  f.status.value = a?.status ?? 'idea'
+  f.tags.value = a?.tags?.split(',').join(', ') ?? ''
+  f.description.value = a?.description ?? ''
+  $('#cancel').hidden = !a
+  $('#err').textContent = ''
+  if (a) f.name.focus()
+}
+
+$('#editor').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const f = e.target
+  const data = { name: f.name.value, url: f.url.value, status: f.status.value, tags: f.tags.value, description: f.description.value }
+  try {
+    if (f.id.value) await api(`/api/apps/${f.id.value}`, { method: 'PUT', body: JSON.stringify(data) })
+    else await api('/api/apps', { method: 'POST', body: JSON.stringify(data) })
+    fillForm(null)
+    await load()
+  } catch (err) { $('#err').textContent = err.message }
+})
+$('#cancel').onclick = () => fillForm(null)
+
+$('#grid').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-act]'); if (!btn) return
+  const id = btn.closest('.card').dataset.id
+  const a = apps.find((x) => x.id === id)
+  if (btn.dataset.act === 'edit') { fillForm(a); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  if (btn.dataset.act === 'del' && confirm(`Delete "${a.name}"?`)) {
+    try { await api(`/api/apps/${id}`, { method: 'DELETE' }); await load() } catch (err) { alert(err.message) }
+  }
+})
+
+$('#search').oninput = render
+$('#status-filter').onchange = render
+
+async function load() {
+  apps = await api('/api/apps')
+  render()
+}
+
+async function init() {
+  me = await api('/api/me').catch(() => me)
+  $('#signin').hidden = !!me.sub
+  $('#signout').hidden = !me.sub
+  $('#editor').hidden = !me.owner
+  $('#who').textContent = me.sub ? (me.name || 'Signed in') : ''
+  if (me.sub && !me.owner) {
+    $('#owner-hint').hidden = false
+    $('#owner-hint').innerHTML = `Signed in but not owner. Your id: <code id="sub">${esc(me.sub)}</code>`
+  }
+  await load()
+}
+init()
+</script>
+</body>
+</html>
